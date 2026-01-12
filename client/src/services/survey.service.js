@@ -20,3 +20,13 @@ export const getSurveyByLink = async (link) => {
   return response.data;
 };
 
+export const updateSurvey = async (id, data) => {
+  const response = await api.patch(`/surveys/${id}`, data);
+  return response.data;
+};
+
+export const deleteSurvey = async (id) => {
+  const response = await api.delete(`/surveys/${id}`);
+  return response.data;
+};
+

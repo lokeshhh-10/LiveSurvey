@@ -16,7 +16,7 @@ export const submitResponse = async (req, res) => {
     }
 
     if (!survey.isPublished) {
-      return res.status(400).json({ message: 'Survey is not published' });
+      return res.status(400).json({ message: 'This survey is closed and no longer accepting responses' });
     }
 
     if (userIdentifier) {

@@ -12,8 +12,8 @@ const PrivateRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-xl text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
+        <p className="text-lg text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }

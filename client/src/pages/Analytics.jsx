@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext.jsx";
 import { io } from "socket.io-client";
 import { getSurveyById } from "../services/survey.service.js";
 import { getAnalytics } from "../services/analytics.service.js";
@@ -14,6 +15,14 @@ import {
   Title,
 } from "chart.js";
 import { Pie, Bar } from "react-chartjs-2";
+import {
+  ArrowLeft,
+  Copy,
+  Check,
+  BarChart3,
+  Link as LinkIcon,
+} from "lucide-react";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 
 ChartJS.register(
   ArcElement,
@@ -28,10 +37,12 @@ ChartJS.register(
 const Analytics = () => {
   const { surveyId } = useParams();
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [analytics, setAnalytics] = useState(null);
   const [survey, setSurvey] = useState(null);
   const [loading, setLoading] = useState(true);
   const [shareableLink, setShareableLink] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -46,7 +57,11 @@ const Analytics = () => {
   }, [surveyId]);
 
   const setupSocket = () => {
-    const socketConnection = io("http://localhost:5000");
+    const SOCKET_URL =
+      import.meta.env.VITE_SOCKET_URL ||
+      import.meta.env.VITE_API_URL?.replace("/api", "") ||
+      "http://localhost:5000";
+    const socketConnection = io(SOCKET_URL);
     socketConnection.emit("join-survey", surveyId);
 
     socketConnection.on("new-response", (data) => {
@@ -86,85 +101,149 @@ const Analytics = () => {
 
   const copyLink = () => {
     navigator.clipboard.writeText(shareableLink);
-    alert("Link copied to clipboard!");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Chart colors that work in both themes
+  const getChartColors = () => {
+    if (theme === "dark") {
+      return [
+        "#6366F1", // indigo
+        "#8B5CF6", // purple
+        "#EC4899", // pink
+        "#10B981", // green
+        "#F59E0B", // amber
+        "#EF4444", // red
+      ];
+    }
+    return [
+      "#4F46E5", // indigo
+      "#7C3AED", // purple
+      "#DB2777", // pink
+      "#059669", // green
+      "#D97706", // amber
+      "#DC2626", // red
+    ];
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-xl text-gray-600">Loading analytics...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
+        <p className="text-lg text-[var(--text-secondary)]">
+          Loading analytics...
+        </p>
       </div>
     );
   }
 
   if (!analytics || !survey) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-xl text-red-600">Failed to load analytics</p>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
+        <p className="text-lg text-red-600 dark:text-red-400">
+          Failed to load analytics
+        </p>
       </div>
     );
   }
 
+  const chartColors = getChartColors();
+
   return (
-    <div className="min-h-screen bg-gray-50 p-5">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">
-                {analytics.surveyTitle}
-              </h1>
-              <p className="text-gray-600 mt-2">
-                Total Responses: {analytics.totalResponses}
-              </p>
+    <div className="min-h-screen bg-[var(--bg-primary)] transition-colors duration-200">
+      <header className="bg-[var(--bg-card)] border-b border-[var(--border-color)] p-6 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="p-2 rounded-lg hover:bg-[var(--bg-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2"
+          >
+            <ArrowLeft className="w-5 h-5 text-[var(--text-primary)]" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">
+              {analytics.surveyTitle}
+            </h1>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">
+              Total Responses:{" "}
+              <span className="font-medium text-[var(--text-primary)]">
+                {analytics.totalResponses}
+              </span>
+            </p>
+          </div>
+        </div>
+        <ThemeToggle />
+      </header>
+
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="bg-[var(--bg-card)] rounded-xl shadow-lg p-6 mb-6 border border-[var(--border-color)]">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-[var(--primary)]" />
+              <h2 className="text-lg font-medium text-[var(--text-primary)]">
+                Shareable Link
+              </h2>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={copyLink}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition"
-              >
-                Copy Shareable Link
-              </button>
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition"
-              >
-                Back to Dashboard
-              </button>
-            </div>
+            <button
+              onClick={copyLink}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  Copy Link
+                </>
+              )}
+            </button>
           </div>
 
           {shareableLink && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600 mb-2">Shareable Link:</p>
+            <div className="bg-[var(--bg-primary)] p-4 rounded-lg border border-[var(--border-color)]">
+              <p className="text-xs uppercase tracking-wide font-medium text-[var(--text-secondary)] mb-2">
+                Shareable Link:
+              </p>
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={shareableLink}
-                  readOnly
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
-                />
+                <div className="flex-1 flex items-center gap-2 px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-card)]">
+                  <LinkIcon className="w-4 h-4 text-[var(--text-secondary)] flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={shareableLink}
+                    readOnly
+                    className="flex-1 bg-transparent text-sm text-[var(--text-primary)] focus:outline-none"
+                  />
+                </div>
                 <button
                   onClick={copyLink}
-                  className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition text-sm"
+                  className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2"
                 >
-                  Copy
+                  {copied ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {analytics.questionAnalytics.map((qa, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">
+            <div
+              key={index}
+              className="bg-[var(--bg-card)] rounded-xl shadow-md p-4 border border-[var(--border-color)]"
+            >
+              <h3 className="text-base font-medium text-[var(--text-primary)] mb-3">
                 {index + 1}. {qa.question}
               </h3>
 
               {qa.type === "MCQ" ? (
-                <div>
-                  <div className="mb-4">
+                <div className="space-y-3">
+                  <div className="h-48">
                     <Pie
                       data={{
                         labels: qa.options,
@@ -174,30 +253,43 @@ const Analytics = () => {
                             data: qa.options.map(
                               (opt) => qa.optionCounts[opt] || 0
                             ),
-                            backgroundColor: [
-                              "#667eea",
-                              "#764ba2",
-                              "#f093fb",
-                              "#4facfe",
-                              "#43e97b",
-                              "#fa709a",
-                            ],
+                            backgroundColor: chartColors,
                             borderWidth: 2,
-                            borderColor: "#fff",
+                            borderColor:
+                              theme === "dark" ? "#020617" : "#FFFFFF",
                           },
                         ],
                       }}
                       options={{
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: {
                           legend: {
                             position: "bottom",
+                            labels: {
+                              color: theme === "dark" ? "#E5E7EB" : "#111827",
+                              padding: 8,
+                              font: {
+                                family: "Poppins",
+                                size: 10,
+                              },
+                            },
+                          },
+                          tooltip: {
+                            backgroundColor:
+                              theme === "dark" ? "#020617" : "#FFFFFF",
+                            titleColor:
+                              theme === "dark" ? "#E5E7EB" : "#111827",
+                            bodyColor: theme === "dark" ? "#E5E7EB" : "#111827",
+                            borderColor:
+                              theme === "dark" ? "#1E293B" : "#E5E7EB",
+                            borderWidth: 1,
                           },
                         },
                       }}
                     />
                   </div>
-                  <div className="mt-4">
+                  <div className="h-40">
                     <Bar
                       data={{
                         labels: qa.options,
@@ -207,17 +299,28 @@ const Analytics = () => {
                             data: qa.options.map(
                               (opt) => qa.optionCounts[opt] || 0
                             ),
-                            backgroundColor: "#667eea",
-                            borderColor: "#5568d3",
+                            backgroundColor: chartColors[0],
+                            borderColor: chartColors[0],
                             borderWidth: 1,
                           },
                         ],
                       }}
                       options={{
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: {
                           legend: {
                             display: false,
+                          },
+                          tooltip: {
+                            backgroundColor:
+                              theme === "dark" ? "#020617" : "#FFFFFF",
+                            titleColor:
+                              theme === "dark" ? "#E5E7EB" : "#111827",
+                            bodyColor: theme === "dark" ? "#E5E7EB" : "#111827",
+                            borderColor:
+                              theme === "dark" ? "#1E293B" : "#E5E7EB",
+                            borderWidth: 1,
                           },
                         },
                         scales: {
@@ -225,6 +328,24 @@ const Analytics = () => {
                             beginAtZero: true,
                             ticks: {
                               stepSize: 1,
+                              color: theme === "dark" ? "#94A3B8" : "#6B7280",
+                              font: {
+                                family: "Poppins",
+                              },
+                            },
+                            grid: {
+                              color: theme === "dark" ? "#1E293B" : "#E5E7EB",
+                            },
+                          },
+                          x: {
+                            ticks: {
+                              color: theme === "dark" ? "#94A3B8" : "#6B7280",
+                              font: {
+                                family: "Poppins",
+                              },
+                            },
+                            grid: {
+                              color: theme === "dark" ? "#1E293B" : "#E5E7EB",
                             },
                           },
                         },
@@ -234,21 +355,28 @@ const Analytics = () => {
                 </div>
               ) : (
                 <div>
-                  <p className="text-gray-600 mb-3">
-                    Total Text Responses: {qa.totalTextResponses}
+                  <p className="text-xs text-[var(--text-secondary)] mb-2">
+                    Total Text Responses:{" "}
+                    <span className="font-medium text-[var(--text-primary)]">
+                      {qa.totalTextResponses}
+                    </span>
                   </p>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
                     {qa.textAnswers.length > 0 ? (
                       qa.textAnswers.map((answer, aIndex) => (
                         <div
                           key={aIndex}
-                          className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                          className="p-2 bg-[var(--bg-primary)] rounded-lg border border-[var(--border-color)]"
                         >
-                          <p className="text-gray-700 text-sm">{answer}</p>
+                          <p className="text-xs text-[var(--text-primary)]">
+                            {answer}
+                          </p>
                         </div>
                       ))
                     ) : (
-                      <p className="text-gray-500 text-sm">No responses yet</p>
+                      <p className="text-sm text-[var(--text-secondary)] text-center py-4">
+                        No responses yet
+                      </p>
                     )}
                   </div>
                 </div>

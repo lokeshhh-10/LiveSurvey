@@ -1,66 +1,99 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
+import { Mail, Lock, LogIn } from "lucide-react";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const { login } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     const result = await login(email, password);
     if (result.success) {
-      navigate('/dashboard');
+      navigate("/dashboard");
     } else {
       setError(result.message);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 p-5">
-      <div className="bg-white p-10 rounded-xl shadow-2xl w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Login</h2>
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] p-5 transition-colors duration-200">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      <div className="bg-[var(--bg-card)] p-10 rounded-xl shadow-lg w-full max-w-md border border-[var(--border-color)]">
+        <div className="text-center mb-8">
+          <h1 className="text-xl font-semibold text-[var(--primary)] mb-2">
+            Live Survey
+          </h1>
+          <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-2">
+            Login
+          </h2>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Welcome back to Live Survey
+          </p>
+        </div>
         {error && (
-          <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-5 text-center">
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-3 rounded-lg mb-5 text-center text-sm border border-red-200 dark:border-red-800">
             {error}
           </div>
         )}
-        <form onSubmit={handleSubmit}>
-          <div className="mb-5">
-            <label className="block mb-2 text-gray-700 font-medium">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition"
-            />
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block mb-2 text-xs uppercase tracking-wide font-medium text-[var(--text-secondary)]">
+              Email
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)]" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full pl-10 pr-4 py-3 border border-[var(--border-color)] rounded-lg bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
+                placeholder="Enter your email"
+              />
+            </div>
           </div>
-          <div className="mb-5">
-            <label className="block mb-2 text-gray-700 font-medium">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 transition"
-            />
+          <div>
+            <label className="block mb-2 text-xs uppercase tracking-wide font-medium text-[var(--text-secondary)]">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)]" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full pl-10 pr-4 py-3 border border-[var(--border-color)] rounded-lg bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
+                placeholder="Enter your password"
+              />
+            </div>
           </div>
           <button
             type="submit"
-            className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-600 hover:to-purple-700 transition transform hover:-translate-y-0.5 shadow-lg"
+            className="w-full py-3 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2"
           >
+            <LogIn className="w-5 h-5" />
             Login
           </button>
         </form>
-        <p className="text-center mt-6 text-gray-600">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-indigo-600 font-semibold hover:underline">
+        <p className="text-center mt-6 text-sm text-[var(--text-secondary)]">
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            className="text-[var(--primary)] font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2 rounded"
+          >
             Register
           </Link>
         </p>
@@ -70,4 +103,3 @@ const Login = () => {
 };
 
 export default Login;
-
